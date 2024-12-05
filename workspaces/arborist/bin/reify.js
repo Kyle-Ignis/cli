@@ -1,3 +1,5 @@
+const fs = require('node:fs')
+const path = require('node:path')
 const Arborist = require('../')
 
 const printTree = require('./lib/print-tree.js')
@@ -31,6 +33,13 @@ const printDiff = diff => {
 }
 
 module.exports = (options, time) => {
+  // Check for package.json
+  if (!fs.existsSync(path.join(options.path, 'package.json'))) {
+    log.error('No package.json found in the current directory.')
+    log.error('Please navigate to the correct directory or run npm init.')
+    return Promise.resolve('Aborted due to missing package.json')
+  }
+
   const arb = new Arborist(options)
   return arb
     .reify(options)
