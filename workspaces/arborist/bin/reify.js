@@ -32,26 +32,23 @@ const printDiff = diff => {
   })
 }
 
-module.exports = (options, time) => {
+module.exports = async (options, time) => {
   // Check for package.json
   if (!fs.existsSync(path.join(options.path, 'package.json'))) {
     log.error('No package.json found in the current directory.')
     log.error('Please navigate to the correct directory or run npm init.')
-    return Promise.resolve('Aborted due to missing package.json')
+    throw new Error('Aborted due to missing package.json')
   }
 
   const arb = new Arborist(options)
-  return arb
-    .reify(options)
-    .then(time)
-    .then(async ({ timing, result: tree }) => {
-      printTree(tree)
-      if (options.dryRun) {
-        printDiff(arb.diff)
-      }
-      if (tree.meta && options.save) {
-        await tree.meta.save()
-      }
-      return `resolved ${tree.inventory.size} deps in ${timing.seconds}`
-    })
+  const { timing, result: tree } = await arb.reify(options).then(time)
+
+  printTree(tree)
+  if (options.dryRun) {
+    printDiff(arb.diff)
+  }
+  if (tree.meta && options.save) {
+    await tree.meta.save()
+  }
+  return `resolved ${tree.inventory.size} deps in ${timing.seconds}`
 }
